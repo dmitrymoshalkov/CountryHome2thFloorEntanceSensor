@@ -10,6 +10,9 @@
 #define COMPARE_TEMP 1 // Send temperature only if changed? 1 = Yes 0 = No
 #define MAX_ATTACHED_DS18B20 16
 
+#define RADIO_RESET_DELAY_TIME 20 //Задержка между сообщениями
+#define MESSAGE_ACK_RETRY_COUNT 5  //количество попыток отсылки сообщения с запросом подтверждения
+
 #define NODE_ID 88
 
 
@@ -52,6 +55,8 @@ unsigned long MSsensorInterval=60000;
 boolean boolMotionSensorDisabled = false;
 boolean boolRecheckSensorValues = false;
 
+
+boolean gotAck=false; //подтверждение от гейта о получении сообщения 
 
 OneWire oneWire(TEMPERATURE_SENSOR_DIGITAL_PIN); // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 DallasTemperature sensors(&oneWire); // Pass the oneWire reference to Dallas Temperature. 
@@ -181,7 +186,19 @@ void loop() {
    if (lastMotion != motion || boolRecheckSensorValues) {
     Serial.println("Motion detected");
   lastMotion = motion;     
-   gw.send(MotionMsg.set(motion ? "1" : "0" ));  // Send motion value to gw
+
+    //Отсылаем состояние сенсора с подтверждением получения
+    int iCount = MESSAGE_ACK_RETRY_COUNT;
+
+    while( !gotAck && iCount > 0 )
+    {
+      gw.send(MotionMsg.set(motion ? "1" : "0" ), true);  // Send motion value to gw
+      gw.wait(RADIO_RESET_DELAY_TIME);
+      iCount--;
+    }
+    gotAck = false;
+
+   
      if (motion == 1)    digitalWrite(LED_DIGITAL_PIN,HIGH);
           else        digitalWrite(LED_DIGITAL_PIN,LOW);
   }
@@ -200,8 +217,18 @@ checkTemp();
     value = debouncer[0].read() == HIGH;
  
   if (value != oldValue_switch1 || boolRecheckSensorValues) {
-     // Send in the new value
-     gw.send(DoorMsg1.set(value ? "1" : "0"));
+
+  //Отсылаем состояние сенсора с подтверждением получения
+  iCount = MESSAGE_ACK_RETRY_COUNT;
+
+    while( !gotAck && iCount > 0 )
+    {
+      gw.send(DoorMsg1.set(value ? "1" : "0"), true);  // Send motion value to gw
+      gw.wait(RADIO_RESET_DELAY_TIME);
+      iCount--;
+    }
+    gotAck = false;
+
      oldValue_switch1 = value;
          Serial.print("Door1: ");
         Serial.println(value);
@@ -218,8 +245,20 @@ checkTemp();
     value2 = debouncer[1].read() == HIGH;
  
   if (value2 != oldValue_switch2 || boolRecheckSensorValues) {
-     // Send in the new value
-     gw.send(DoorMsg2.set(value2 ? "1" : "0"));   
+
+  //Отсылаем состояние сенсора с подтверждением получения
+  iCount = MESSAGE_ACK_RETRY_COUNT;
+
+    while( !gotAck && iCount > 0 )
+    {
+      gw.send(DoorMsg2.set(value2 ? "1" : "0"), true);   // Send motion value to gw
+      gw.wait(RADIO_RESET_DELAY_TIME);
+      iCount--;
+    }
+    
+    gotAck = false;
+
+       
      oldValue_switch2 = value2;
         Serial.print("Door2: ");
         Serial.println(value2);
@@ -292,6 +331,13 @@ void reportMotionSensorState()
 
 void incomingMessage(const MyMessage &message) {
   // We only expect one type of message from controller. But we better check anyway.
+
+  if (message.isAck())
+  {
+    gotAck = true;
+    return;
+  }
+
 
     if ( message.sensor == REBOOT_CHILD_ID ) {
              wdt_enable(WDTO_30MS);
