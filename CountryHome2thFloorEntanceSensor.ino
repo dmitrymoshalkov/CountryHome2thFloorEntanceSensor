@@ -272,7 +272,6 @@ void checkTemp()
 }
 
 
-
 void reportMotionSensorState()
 {
 
@@ -288,6 +287,7 @@ void reportMotionSensorState()
 
   
 }
+
 
 
 void incomingMessage(const MyMessage &message) {
