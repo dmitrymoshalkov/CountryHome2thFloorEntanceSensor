@@ -276,7 +276,7 @@ void reportMotionSensorState()
 {
 
     unsigned long currentMSMillis = millis();
-    if(currentMSMillis - previousMSMillis > MSsensorInterval ) {
+    if(currentMSMillis - previousMSMillis > MSsensorInterval  || boolRecheckSensorValues) {
         // Save the current millis
         previousMSMillis = currentMSMillis;
         // take action here:
@@ -309,6 +309,8 @@ void incomingMessage(const MyMessage &message) {
          {
             boolMotionSensorDisabled = false;
          }
+
+         gw.send(MotionStateMsg.set(boolMotionSensorDisabled ? "1" : "0" )); 
 
      }
      
