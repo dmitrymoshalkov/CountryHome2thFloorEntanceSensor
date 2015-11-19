@@ -57,6 +57,7 @@ boolean boolRecheckSensorValues = false;
 
 
 boolean gotAck=false; //подтверждение от гейта о получении сообщения 
+int iCount = MESSAGE_ACK_RETRY_COUNT;
 
 OneWire oneWire(TEMPERATURE_SENSOR_DIGITAL_PIN); // Setup a oneWire instance to communicate with any OneWire devices (not just Maxim/Dallas temperature ICs)
 DallasTemperature sensors(&oneWire); // Pass the oneWire reference to Dallas Temperature. 
@@ -188,7 +189,7 @@ void loop() {
   lastMotion = motion;     
 
     //Отсылаем состояние сенсора с подтверждением получения
-    int iCount = MESSAGE_ACK_RETRY_COUNT;
+    iCount = MESSAGE_ACK_RETRY_COUNT;
 
     while( !gotAck && iCount > 0 )
     {
@@ -255,7 +256,7 @@ checkTemp();
       gw.wait(RADIO_RESET_DELAY_TIME);
       iCount--;
     }
-    
+
     gotAck = false;
 
        
