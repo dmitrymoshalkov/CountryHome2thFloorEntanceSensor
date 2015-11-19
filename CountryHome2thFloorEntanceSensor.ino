@@ -87,14 +87,20 @@ void setup() {
     Serial.println("Begin setup");
     // Initialize library and add callback for incoming messages
     gw.begin(incomingMessage, NODE_ID, false);
+      gw.wait(RADIO_RESET_DELAY_TIME);
+
 
   // Send the sketch version information to the gateway and Controller
   gw.sendSketchInfo("Country home entrance sensor", "1.0");
+      gw.wait(RADIO_RESET_DELAY_TIME);
 
    metric = gw.getConfig().isMetric;
 
   // Present all sensors to controller
      gw.present(CHILD_ID_TEMPERATURE, S_TEMP);
+        gw.wait(RADIO_RESET_DELAY_TIME);     
+
+
           // Fetch temperatures from Dallas sensors
           sensors.requestTemperatures(); 
           float temperature = static_cast<float>(static_cast<int> (sensors.getTempCByIndex(0) * 10.)) / 10.;
@@ -112,15 +118,17 @@ void setup() {
   debouncer[0].attach(DOOR1_SENSOR_DIGITAL_PIN);
   debouncer[0].interval(5);
   gw.present(CHILD_ID_DOOR1, S_DOOR);  
+        gw.wait(RADIO_RESET_DELAY_TIME);     
 
-  delay(250);
+  gw.wait(250);
   
   debouncer[1] = Bounce();
   debouncer[1].attach(DOOR2_SENSOR_DIGITAL_PIN);
   debouncer[1].interval(5);
   gw.present(CHILD_ID_DOOR2, S_DOOR);  
+        gw.wait(RADIO_RESET_DELAY_TIME);     
 
-  delay(250);
+  gw.wait(250);
   
 
 
@@ -131,20 +139,21 @@ void setup() {
   pinMode(MOTION_SENSOR_DIGITAL_PIN, INPUT);      // sets the motion sensor digital pin as input
   // Register all sensors to gw (they will be created as child devices)
   gw.present(CHILD_ID_MOTION, S_MOTION);
-
+        gw.wait(RADIO_RESET_DELAY_TIME);   
   
 
 //reboot sensor command
      gw.present(REBOOT_CHILD_ID, S_BINARY); 
-  
+         gw.wait(RADIO_RESET_DELAY_TIME);    
 
 //disable-enable motion sensor
      gw.present(DISABLE_MOTION_SENSOR_CHILD_ID, S_MOTION); 
-
+        gw.wait(RADIO_RESET_DELAY_TIME);   
 
 //reget sensor values
   gw.present(RECHECK_SENSOR_VALUES, S_LIGHT); 
-
+        gw.wait(RADIO_RESET_DELAY_TIME);   
+        
 /***************   Send initial state of sensors to gateway  ****************/
 
      debouncer[0].update();
@@ -153,13 +162,13 @@ void setup() {
     boolean value;
     value = debouncer[0].read() == HIGH;
      gw.send(DoorMsg1.set(value ? "1" : "0"));
-
+        gw.wait(RADIO_RESET_DELAY_TIME);   
   
     debouncer[1].update();
     boolean value2;
     value2 = debouncer[1].read() == HIGH;
      gw.send(DoorMsg2.set(value2 ? "1" : "0"));   
-
+        gw.wait(RADIO_RESET_DELAY_TIME);   
   
   
   boolean motion = digitalRead(MOTION_SENSOR_DIGITAL_PIN) == HIGH; 
